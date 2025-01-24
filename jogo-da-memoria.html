@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Memória</title>
+    <link rel="stylesheet" href="jogo-da-memoria.css">
+</head>
+<body>
+    <div class="jogo-container">
+        <h1>Jogo da Memória</h1>
+        
+        <div id="form-jogadores" class="form-jogadores">
+            <div class="input-grupo">
+                <label for="jogador1">Nome do Jogador 1:</label>
+                <input type="text" id="jogador1" placeholder="Digite o nome">
+            </div>
+            <div class="input-grupo">
+                <label for="jogador2">Nome do Jogador 2:</label>
+                <input type="text" id="jogador2" placeholder="Digite o nome">
+            </div>
+            <div class="botoes">
+                <button class="btn-comecar" onclick="iniciarJogo()">Começar Jogo!</button>
+            </div>
+        </div>
+
+        <div id="jogo" style="display: none;">
+            <div class="placar">
+                <div class="jogador-placar" id="placar1"></div>
+                <div class="jogador-placar" id="placar2"></div>
+            </div>
+            <div class="mensagem" id="mensagem"></div>
+            <div class="tabuleiro" id="tabuleiro"></div>
+            <div class="botoes">
+                <button class="btn-voltar" onclick="window.location.href='index.html'">Voltar</button>
+                <button class="btn-reiniciar" onclick="reiniciarJogo()">Jogar Novamente</button>
+            </div>
+        </div>
+        
+        <div id="tela-vitoria" class="tela-vitoria">
+            <div class="conteudo-vitoria">
+                <div class="trofeu">🏆</div>
+                <div class="nome-vencedor" id="nome-vencedor"></div>
+                <div class="placar-final" id="placar-final">
+                    <div class="placar-jogador" id="placar-final-1"></div>
+                    <div class="placar-jogador" id="placar-final-2"></div>
+                </div>
+                <div class="botoes-vitoria">
+                    <button class="btn-jogar-novamente" onclick="reiniciarJogo()">Jogar Novamente</button>
+                    <button class="btn-voltar-menu" onclick="window.location.href='index.html'">Voltar ao Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const emojis = ['🐶', '🐱', '🐰', '🦊', '🐼', '🐨', '🦁', '🐯'];
+        let cartas = [];
+        let cartasViradas = [];
+        let paresEncontrados = 0;
+        let nomeJogador1 = '';
+        let nomeJogador2 = '';
+        let pontuacaoJogador1 = 0;
+        let pontuacaoJogador2 = 0;
+        let jogadorAtual = 1;
+        let jogoAtivo = false;
+
+        function iniciarJogo() {
+            nomeJogador1 = document.getElementById('jogador1').value.trim() || 'Jogador 1';
+            nomeJogador2 = document.getElementById('jogador2').value.trim() || 'Jogador 2';
+            
+            if (nomeJogador1 && nomeJogador2) {
+                document.getElementById('form-jogadores').style.display = 'none';
+                document.getElementById('jogo').style.display = 'block';
+                jogoAtivo = true;
+                reiniciarJogo();
+            }
+        }
+
+        function atualizarPlacar() {
+            document.getElementById('placar1').innerText = `${nomeJogador1}: ${pontuacaoJogador1}`;
+            document.getElementById('placar2').innerText = `${nomeJogador2}: ${pontuacaoJogador2}`;
+            
+            document.getElementById('placar1').classList.toggle('ativo', jogadorAtual === 1);
+            document.getElementById('placar2').classList.toggle('ativo', jogadorAtual === 2);
+            
+            document.getElementById('mensagem').innerText = `Vez de ${jogadorAtual === 1 ? nomeJogador1 : nomeJogador2}`;
+        }
+
+        function virarCarta(carta) {
+            if (!jogoAtivo || cartasViradas.length === 2 || carta.classList.contains('virada')) return;
+
+            carta.classList.add('virada');
+            carta.innerHTML = carta.dataset.valor;
+            cartasViradas.push(carta);
+
+            if (cartasViradas.length === 2) {
+                setTimeout(verificarPar, 1000);
+            }
+        }
+
+        function verificarPar() {
+            const [carta1, carta2] = cartasViradas;
+            if (carta1.dataset.valor === carta2.dataset.valor) {
+                paresEncontrados++;
+                if (jogadorAtual === 1) {
+                    pontuacaoJogador1++;
+                } else {
+                    pontuacaoJogador2++;
+                }
+                
+                if (paresEncontrados === emojis.length) {
+                    mostrarTelaVitoria();
+                }
+            } else {
+                carta1.classList.remove('virada');
+                carta2.classList.remove('virada');
+                carta1.innerHTML = '';
+                carta2.innerHTML = '';
+                jogadorAtual = jogadorAtual === 1 ? 2 : 1;
+            }
+            cartasViradas = [];
+            atualizarPlacar();
+        }
+
+        function reiniciarJogo() {
+            const tabuleiro = document.getElementById('tabuleiro');
+            cartas = [...emojis, ...emojis];
+            embaralharCartas();
+            paresEncontrados = 0;
+            pontuacaoJogador1 = 0;
+            pontuacaoJogador2 = 0;
+            jogadorAtual = 1;
+            cartasViradas = [];
+            
+            tabuleiro.innerHTML = '';
+            cartas.forEach((emoji, index) => {
+                const carta = document.createElement('div');
+                carta.className = 'carta';
+                carta.dataset.valor = emoji;
+                carta.dataset.index = index;
+                carta.onclick = () => virarCarta(carta);
+                tabuleiro.appendChild(carta);
+            });
+            
+            atualizarPlacar();
+        }
+
+        function embaralharCartas() {
+            for (let i = cartas.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cartas[i], cartas[j]] = [cartas[j], cartas[i]];
+            }
+        }
+
+        function mostrarTelaVitoria() {
+            const telaVitoria = document.getElementById('tela-vitoria');
+            const vencedor = pontuacaoJogador1 > pontuacaoJogador2 ? nomeJogador1 : 
+                           pontuacaoJogador2 > pontuacaoJogador1 ? nomeJogador2 : 'Empate';
+            
+            document.getElementById('nome-vencedor').innerText = vencedor === 'Empate' ? 
+                'Jogo Empatado! 🤝' : `${vencedor} Venceu! 🎉`;
+            
+            document.getElementById('placar-final-1').innerText = `${nomeJogador1}: ${pontuacaoJogador1} pares`;
+            document.getElementById('placar-final-2').innerText = `${nomeJogador2}: ${pontuacaoJogador2} pares`;
+            
+            // Criar confetes
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = ['#ff6b6b', '#4a90e2', '#FFD700', '#98FB98'][Math.floor(Math.random() * 4)];
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                telaVitoria.appendChild(confetti);
+            }
+            
+            telaVitoria.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

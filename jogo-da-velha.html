@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha</title>
+    <link rel="stylesheet" href="jogo-da-velha.css">
+</head>
+<body>
+    <div class="jogo-container">
+        <h1>Jogo da Velha</h1>
+        
+        <div id="form-jogadores" class="form-jogadores">
+            <div class="input-grupo">
+                <label for="jogador1">Nome do Jogador X:</label>
+                <input type="text" id="jogador1" placeholder="Digite o nome">
+            </div>
+            <div class="input-grupo">
+                <label for="jogador2">Nome do Jogador O:</label>
+                <input type="text" id="jogador2" placeholder="Digite o nome">
+            </div>
+            <div class="botoes">
+                <button class="btn-comecar" onclick="iniciarJogo()">Começar Jogo!</button>
+            </div>
+        </div>
+
+        <div id="jogo" style="display: none;">
+            <div class="mensagem" id="mensagem"></div>
+            <div class="tabuleiro" id="tabuleiro">
+                <div class="celula" onclick="fazerJogada(0)"></div>
+                <div class="celula" onclick="fazerJogada(1)"></div>
+                <div class="celula" onclick="fazerJogada(2)"></div>
+                <div class="celula" onclick="fazerJogada(3)"></div>
+                <div class="celula" onclick="fazerJogada(4)"></div>
+                <div class="celula" onclick="fazerJogada(5)"></div>
+                <div class="celula" onclick="fazerJogada(6)"></div>
+                <div class="celula" onclick="fazerJogada(7)"></div>
+                <div class="celula" onclick="fazerJogada(8)"></div>
+            </div>
+            <div class="botoes">
+                <button class="btn-voltar" onclick="window.location.href='index.html'">Voltar</button>
+                <button class="btn-reiniciar" onclick="reiniciarJogo()">Jogar Novamente</button>
+            </div>
+        </div>
+
+        <div id="tela-vitoria" class="tela-vitoria">
+            <div class="conteudo-vitoria">
+                <div class="trofeu">🏆</div>
+                <div class="nome-vencedor" id="nome-vencedor"></div>
+                <div class="mensagem-vitoria" id="mensagem-vitoria"></div>
+                <div class="botoes-vitoria">
+                    <button class="btn-jogar-novamente" onclick="reiniciarJogo()">Jogar Novamente</button>
+                    <button class="btn-voltar-menu" onclick="window.location.href='index.html'">Voltar ao Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let jogadorAtual = 'X';
+        let tabuleiro = ['', '', '', '', '', '', '', '', ''];
+        let jogoAtivo = false;
+        let nomeJogador1 = '';
+        let nomeJogador2 = '';
+        const mensagemElement = document.getElementById('mensagem');
+
+        function iniciarJogo() {
+            nomeJogador1 = document.getElementById('jogador1').value.trim() || 'Jogador X';
+            nomeJogador2 = document.getElementById('jogador2').value.trim() || 'Jogador O';
+            
+            document.getElementById('form-jogadores').style.display = 'none';
+            document.getElementById('jogo').style.display = 'block';
+            jogoAtivo = true;
+            reiniciarJogo();
+        }
+
+        function fazerJogada(indice) {
+            if (tabuleiro[indice] === '' && jogoAtivo) {
+                const celula = document.getElementsByClassName('celula')[indice];
+                tabuleiro[indice] = jogadorAtual;
+                celula.textContent = jogadorAtual;
+                celula.setAttribute('data-jogador', jogadorAtual);
+                
+                if (verificarVitoria()) {
+                    const nomeVencedor = jogadorAtual === 'X' ? nomeJogador1 : nomeJogador2;
+                    mensagemElement.innerText = `${nomeVencedor} venceu! 🎉`;
+                    jogoAtivo = false;
+                    mostrarTelaVitoria(nomeVencedor);
+                    return;
+                }
+                
+                if (verificarEmpate()) {
+                    mensagemElement.innerText = 'Empate! 😊';
+                    jogoAtivo = false;
+                    return;
+                }
+
+                jogadorAtual = jogadorAtual === 'X' ? 'O' : 'X';
+                const nomeAtual = jogadorAtual === 'X' ? nomeJogador1 : nomeJogador2;
+                mensagemElement.innerText = `Vez de ${nomeAtual}`;
+            }
+        }
+
+        function verificarVitoria() {
+            const combinacoesVitoria = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // horizontais
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // verticais
+                [0, 4, 8], [2, 4, 6] // diagonais
+            ];
+
+            return combinacoesVitoria.some(combinacao => {
+                return combinacao.every(indice => {
+                    return tabuleiro[indice] === jogadorAtual;
+                });
+            });
+        }
+
+        function verificarEmpate() {
+            return tabuleiro.every(celula => celula !== '');
+        }
+
+        function reiniciarJogo() {
+            jogadorAtual = 'X';
+            tabuleiro = ['', '', '', '', '', '', '', '', ''];
+            jogoAtivo = true;
+            mensagemElement.innerText = `Vez de ${nomeJogador1}`;
+            
+            document.querySelectorAll('.celula').forEach(celula => {
+                celula.textContent = '';
+                celula.removeAttribute('data-jogador');
+            });
+
+            // Limpar tela de vitória
+            const telaVitoria = document.getElementById('tela-vitoria');
+            telaVitoria.style.display = 'none';
+            telaVitoria.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
+        }
+
+        function mostrarTelaVitoria(nomeVencedor) {
+            const telaVitoria = document.getElementById('tela-vitoria');
+            document.getElementById('nome-vencedor').innerText = nomeVencedor;
+            document.getElementById('mensagem-vitoria').innerText = "É o grande campeão do Jogo da Velha! 🌟";
+            
+            // Criar confetes
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = ['#ff6b6b', '#4a90e2', '#FFD700', '#98FB98'][Math.floor(Math.random() * 4)];
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                telaVitoria.appendChild(confetti);
+            }
+            
+            telaVitoria.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
